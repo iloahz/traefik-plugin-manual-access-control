@@ -14,9 +14,9 @@ type Key struct {
 	key []byte
 }
 
-// seed is a base64 encoded string
-func NewKey(seed string) (*Key, error) {
-	key, err := base64.StdEncoding.DecodeString(seed)
+// key is a base64 encoded string
+func NewKey(keyB64 string) (*Key, error) {
+	key, err := base64.StdEncoding.DecodeString(keyB64)
 	if err != nil {
 		return nil, err
 	}
