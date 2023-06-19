@@ -1,4 +1,4 @@
-package traefikpluginmanualaccesscontrol
+package traefik_plugin_manual_access_control
 
 import (
 	"context"
