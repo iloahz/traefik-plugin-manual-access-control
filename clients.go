@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"sync"
 	"time"
 
@@ -23,10 +24,11 @@ const (
 )
 
 type Client struct {
-	ID     string       `json:"id"`
-	Status ClientStatus `json:"status"`
-	Info   *ClientInfo  `json:"info"`
-	Stats  *ClientStats `json:"stats"`
+	ID       string       `json:"id"`
+	Status   ClientStatus `json:"status"`
+	Info     *ClientInfo  `json:"info"`
+	Resource string       `json:"resource"`
+	Stats    *ClientStats `json:"stats"`
 
 	update chan bool
 }
@@ -40,17 +42,19 @@ func init() {
 	clients = make(map[string]*Client)
 }
 
-func NewClient(ip string, ua string) *Client {
+func NewClient(ip string, ua string, resource string) *Client {
 	c := &Client{
-		ID:     uuid.New().String(),
-		Status: ClientStatusPending,
-		Info:   ParseClientInfo(ip, ua),
+		ID:       uuid.New().String(),
+		Status:   ClientStatusPending,
+		Resource: resource,
 		Stats: &ClientStats{
 			FirstSeen: time.Now().UnixMilli(),
 			LastSeen:  time.Now().UnixMilli(),
 			Count:     1,
 		},
 	}
+	log.Println("new client", c.ID)
+	c.Info = ParseClientInfo(ip, ua)
 	mutex.Lock()
 	defer mutex.Unlock()
 	clients[c.ID] = c
@@ -68,12 +72,16 @@ func GetClientByID(id string) *Client {
 
 func (c *Client) Allow() {
 	c.Status = ClientStatusAllowed
-	c.update <- true
+	go func() {
+		c.update <- true
+	}()
 }
 
 func (c *Client) Block() {
 	c.Status = ClientStatusBlocked
-	c.update <- true
+	go func() {
+		c.update <- true
+	}()
 }
 
 func (c *Client) Update() chan bool {

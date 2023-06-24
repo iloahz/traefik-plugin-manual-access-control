@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,6 +42,14 @@ func waitForConsent(c *gin.Context, client *Client) {
 
 func createServer() {
 	r := gin.Default()
+	r.Use(cors.New(cors.Config{
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH"},
+		AllowHeaders:     []string{"Origin"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		AllowAllOrigins:  true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	r.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "ok")
@@ -49,6 +58,7 @@ func createServer() {
 	type GenerateTokenRequest struct {
 		IP        string `json:"ip"`
 		UserAgent string `json:"user_agent"`
+		Resource  string `json:"resource"`
 	}
 
 	r.POST("/api/token/generate", func(c *gin.Context) {
@@ -58,13 +68,14 @@ func createServer() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		client := NewClient(req.IP, req.UserAgent)
+		client := NewClient(req.IP, req.UserAgent, req.Resource)
 		waitForConsent(c, client)
 	})
 
 	type ValidateTokenRequest struct {
 		IP        string `json:"ip"`
 		UserAgent string `json:"user_agent"`
+		Resource  string `json:"resource"`
 		Token     string `json:"token"`
 	}
 
@@ -87,20 +98,20 @@ func createServer() {
 		}
 		if exp.After(time.Now()) {
 			client := GetClientByID(claims.ID)
-			if client != nil && client.Info != nil || client.Info.UserAgent == req.UserAgent {
+			if client != nil && client.Info != nil && client.Info.UserAgent == req.UserAgent && client.Status == ClientStatusAllowed {
 				// normal case for valid token
 				// TODO refresh token if exp is close
 				c.JSON(http.StatusOK, gin.H{"status": "ok"})
 				return
 			} else if client == nil {
 				// incase token is valid but client is not found, trust it and issue a new token
-				client := NewClient(req.IP, req.UserAgent)
+				client := NewClient(req.IP, req.UserAgent, req.Resource)
 				client.Allow()
 				waitForConsent(c, client)
 				return
 			}
 		}
-		client := NewClient(req.IP, req.UserAgent)
+		client := NewClient(req.IP, req.UserAgent, req.Resource)
 		waitForConsent(c, client)
 	})
 
@@ -156,5 +167,13 @@ func createServer() {
 }
 
 func main() {
+	go func() {
+		time.Sleep(time.Second)
+		NewClient("116.179.32.218", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36", "cdn.home.iloahz.com")
+		c2 := NewClient("116.179.32.82", "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_2 like Mac OS X) AppleWebKit/603.2.4 (KHTML, like Gecko) Version/10.0 Mobile/14F89 Safari/602.1", "code.home.iloahz.com")
+		c2.Allow()
+		c3 := NewClient("116.179.32.204", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36", "chatgpt.home.iloahz.com")
+		c3.Block()
+	}()
 	createServer()
 }

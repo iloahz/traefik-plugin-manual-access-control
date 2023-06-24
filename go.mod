@@ -4,6 +4,8 @@ go 1.19
 
 require github.com/gin-gonic/gin v1.9.1
 
+require github.com/gin-contrib/cors v1.4.0 // indirect
+
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
