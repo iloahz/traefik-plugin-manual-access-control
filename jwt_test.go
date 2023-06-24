@@ -1,21 +1,18 @@
 package main
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 func TestGenerateToken(t *testing.T) {
-	j, err := NewJWT("8HvPVByYKFAt16+qG5/ZDgV11iVEDPOxVrM+caF81jA=")
-	if err != nil {
-		t.Fatal(err)
-	}
+	os.Setenv("JWT_SECRET", "8HvPVByYKFAt16+qG5/ZDgV11iVEDPOxVrM+caF81jA=")
 	token := j.GenerateToken("some_id")
 	t.Log(token)
 }
 
 func TestValidateToken(t *testing.T) {
-	j, err := NewJWT("8HvPVByYKFAt16+qG5/ZDgV11iVEDPOxVrM+caF81jA=")
-	if err != nil {
-		t.Fatal(err)
-	}
+	os.Setenv("JWT_SECRET", "8HvPVByYKFAt16+qG5/ZDgV11iVEDPOxVrM+caF81jA=")
 	token := j.GenerateToken("some_id")
 	claims, err := j.ValidateToken(token)
 	if err != nil {

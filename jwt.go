@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -11,6 +12,18 @@ import (
 
 type JWT struct {
 	secret []byte
+}
+
+var (
+	j *JWT
+)
+
+func init() {
+	var err error
+	j, err = NewJWT(os.Getenv("JWT_SECRET"))
+	if err != nil {
+		panic(err)
+	}
 }
 
 // secret is a base64 encoded string
@@ -33,11 +46,11 @@ func NewJWT(secret string) (*JWT, error) {
 // generate token based on seed using aes
 func (j *JWT) GenerateToken(id string) string {
 	// TODO make exp configurable
-	claims := &jwt.MapClaims{
-		"exp": time.Now().Add(time.Hour * 24 * 30 * 12 * 3).Unix(), // 3 years
-		"iat": time.Now().Unix(),
-		"nbf": time.Now().Unix(),
-		"id":  id,
+	claims := &JWTClaims{
+		Exp: time.Now().Add(time.Hour * 24 * 30 * 12 * 3).Unix(), // 3 years
+		Iat: time.Now().Unix(),
+		Nbf: time.Now().Unix(),
+		ID:  id,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString(j.secret)
@@ -47,8 +60,8 @@ func (j *JWT) GenerateToken(id string) string {
 	return signedToken
 }
 
-func (j *JWT) ValidateToken(signedToken string) (jwt.Claims, error) {
-	var claims jwt.MapClaims
+func (j *JWT) ValidateToken(signedToken string) (*JWTClaims, error) {
+	var claims JWTClaims
 	token, err := jwt.ParseWithClaims(signedToken, &claims, func(token *jwt.Token) (interface{}, error) {
 		return j.secret, nil
 	})
@@ -58,7 +71,7 @@ func (j *JWT) ValidateToken(signedToken string) (jwt.Claims, error) {
 	}
 
 	if token.Valid {
-		return claims, nil
+		return &claims, nil
 	} else {
 		return nil, errors.New("invalid token")
 	}

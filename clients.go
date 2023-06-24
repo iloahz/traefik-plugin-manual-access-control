@@ -1,11 +1,9 @@
 package main
 
 import (
-	"os"
 	"sync"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -38,16 +36,7 @@ var (
 	clients map[string]*Client // id to client
 )
 
-var (
-	j *JWT
-)
-
 func init() {
-	var err error
-	j, err = NewJWT(os.Getenv("JWT_SECRET"))
-	if err != nil {
-		panic(err)
-	}
 	clients = make(map[string]*Client)
 }
 
@@ -77,20 +66,6 @@ func GetClientByID(id string) *Client {
 	return nil
 }
 
-func GetClientByToken(token string) *Client {
-	if len(token) > 0 {
-		if claims, err := j.ValidateToken(token); err == nil {
-			if mapClaims, ok := claims.(jwt.MapClaims); ok {
-				if id, ok := mapClaims["id"].(string); ok {
-					return GetClientByID(id)
-				}
-			}
-		}
-	}
-	// TODO deal with the case that the token is valid but the client is not found
-	return nil
-}
-
 func (c *Client) Allow() {
 	c.Status = ClientStatusAllowed
 	c.update <- true
@@ -103,8 +78,4 @@ func (c *Client) Block() {
 
 func (c *Client) Update() chan bool {
 	return c.update
-}
-
-func (c *Client) GenerateToken() string {
-	return j.GenerateToken(c.ID)
 }
