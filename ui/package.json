@@ -13,8 +13,10 @@
     "@fluentui/react": "^8.110.4",
     "@fluentui/react-components": "^9.22.0",
     "@fluentui/react-icons": "^2.0.204",
+    "mapbox-gl": "^2.15.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-map-gl": "^7.0.25"
   },
   "devDependencies": {
     "@types/react": "^18.0.37",

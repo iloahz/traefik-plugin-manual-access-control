@@ -11,6 +11,7 @@ import {
     CardPreview,
   } from "@fluentui/react-components"
 import { CheckmarkRegular, DismissRegular } from "@fluentui/react-icons"
+import Map from 'react-map-gl'
 import './Client.css'
 import api from './api'
 
@@ -66,6 +67,19 @@ function Client({client}) {
           </div>
           <div>
             <Body1>{client.info.os_name} {client.info.os_version}</Body1>
+          </div>
+          <div>
+            <Map
+              mapboxAccessToken='pk.eyJ1IjoiaWxvYWh6IiwiYSI6ImNqd2dlZDM3MDFlb3E0OG84OGptZmx4YTYifQ.or3xgAAaDIzk3TNpl0rfWQ'
+              mapLib={import('mapbox-gl')}
+              initialViewState={{
+                longitude: client.info.long,
+                latitude: client.info.lat,
+                zoom: 6.5,
+              }}
+              style={{width: 600, height: 400}}
+              mapStyle="mapbox://styles/mapbox/streets-v9"
+            />
           </div>
         </div>
       </CardPreview>
