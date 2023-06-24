@@ -1,4 +1,4 @@
-package plugin
+package main
 
 import (
 	"encoding/base64"
@@ -31,13 +31,13 @@ func NewJWT(secret string) (*JWT, error) {
 }
 
 // generate token based on seed using aes
-func (j *JWT) GenerateToken() string {
+func (j *JWT) GenerateToken(id string) string {
 	// TODO make exp configurable
 	claims := &jwt.MapClaims{
 		"exp": time.Now().Add(time.Hour * 24 * 30 * 12 * 3).Unix(), // 3 years
 		"iat": time.Now().Unix(),
 		"nbf": time.Now().Unix(),
-		"iss": "t-mac",
+		"id":  id,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString(j.secret)

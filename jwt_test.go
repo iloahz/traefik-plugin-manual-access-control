@@ -1,4 +1,4 @@
-package plugin
+package main
 
 import "testing"
 
@@ -7,7 +7,7 @@ func TestGenerateToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	token := j.GenerateToken()
+	token := j.GenerateToken("some_id")
 	t.Log(token)
 }
 
@@ -16,7 +16,7 @@ func TestValidateToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	token := j.GenerateToken()
+	token := j.GenerateToken("some_id")
 	claims, err := j.ValidateToken(token)
 	if err != nil {
 		t.Fatal(err)
@@ -33,7 +33,7 @@ func TestInvalidToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	token := j1.GenerateToken()
+	token := j1.GenerateToken("some_id")
 	_, err = j2.ValidateToken(token)
 	if err == nil {
 		t.Fatal("token is valid")
