@@ -2,9 +2,9 @@ displayName: Manual Access Control
 type: middleware
 iconPath: icon.png
 
-import: github.com/iloahz/traefik-plugin-manual-access-control
+import: github.com/iloahz/traefik-plugin-manual-access-control/plugin
 
-summary: Provide manual access control for Traefik
+summary: Provide manual access control with JWT in cookie
 
 testData:
   Key: 8HvPVByYKFAt16+qG5/ZDgV11iVEDPOxVrM+caF81jA=

@@ -1,1 +1,0 @@
-package traefik_plugin_manual_access_control
