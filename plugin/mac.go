@@ -87,7 +87,7 @@ func (m *MAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				http.Error(rw, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			rw.Header().Add("Set-Cookie", fmt.Sprintf("%s=%s; Path=/", cookieKey, token.Token)
+			rw.Header().Add("Set-Cookie", fmt.Sprintf("%s=%s; Path=/", cookieKey, token.Token))
 			m.next.ServeHTTP(rw, req)
 		} else {
 			// token not generated
