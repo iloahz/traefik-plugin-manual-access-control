@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 type Config struct {
@@ -53,13 +54,14 @@ type Request struct {
 func (m *MAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	cookie, err := req.Cookie(cookieKey)
 	r := &Request{
-		IP:        req.RemoteAddr,
 		UserAgent: req.UserAgent(),
 		URL:       req.URL.String(),
 	}
+	if tokens := strings.Split(req.RemoteAddr, ":"); len(tokens) == 2 {
+		r.IP = tokens[0]
+	}
 	if err != nil {
 		// generate token
-		r.Token = &cookie.Value
 		buf, err := json.Marshal(r)
 		if err != nil {
 			http.Error(rw, err.Error(), http.StatusInternalServerError)

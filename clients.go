@@ -52,6 +52,7 @@ func NewClient(ip string, ua string, url string) *Client {
 			LastSeen:  time.Now().UnixMilli(),
 			Count:     1,
 		},
+		update: make(chan bool, 9),
 	}
 	log.Println("new client", c.ID)
 	c.Info = ParseClientInfo(ip, ua)
