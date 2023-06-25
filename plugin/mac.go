@@ -60,10 +60,13 @@ func (m *MAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if tokens := strings.Split(req.RemoteAddr, ":"); len(tokens) == 2 {
 		r.IP = tokens[0]
 	}
-	if ips := req.Header.Values("X-Forwarded-For"); len(ips) > 0 {
-		if tokens := strings.Split(ips[0], ","); len(tokens) > 0 {
+	if ips := req.Header.Values("X-Forwarded-For"); len(ips) > 0 && len(ips[0]) > 0 {
+		if tokens := strings.Split(ips[0], ","); len(tokens) > 0 && len(tokens[len(tokens)-1]) > 0 {
 			r.IP = tokens[len(tokens)-1]
 		}
+	}
+	if ip := req.Header.Values("X-Real-IP"); len(ip) > 0 && len(ip[0]) > 0 {
+		r.IP = ip[0]
 	}
 	if err != nil {
 		// generate token
@@ -96,11 +99,12 @@ func (m *MAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			}
 			rw.Header().Add("Set-Cookie", fmt.Sprintf("%s=%s; Path=/", cookieKey, token.Token))
 			m.next.ServeHTTP(rw, req)
+			return
 		} else {
 			// token not generated
 			http.Error(rw, ErrNotAllowed.Error(), http.StatusForbidden)
+			return
 		}
-		return
 	} else {
 		// validate token
 		r.Token = &cookie.Value
@@ -115,7 +119,24 @@ func (m *MAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			return
 		}
 		if res.StatusCode == http.StatusOK {
-			// token valid
+			// token valid, might refreshed
+			defer res.Body.Close()
+			type Response struct {
+				Token string `json:"token"`
+			}
+			buf, err := io.ReadAll(res.Body)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			var token Response
+			err = json.Unmarshal(buf, &token)
+			if err != nil {
+				// no new token is returned, just proceed
+				m.next.ServeHTTP(rw, req)
+				return
+			}
+			rw.Header().Add("Set-Cookie", fmt.Sprintf("%s=%s; Path=/", cookieKey, token.Token))
 			m.next.ServeHTTP(rw, req)
 			return
 		} else {

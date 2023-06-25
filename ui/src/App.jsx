@@ -8,7 +8,7 @@ function App() {
 
   const fetchData = async () => {
     const res = await api.getClients()
-    setClients(res.clients.sort((a, b) => a.stats.last_seen - b.stats.last_seen))
+    setClients(res.clients.sort((a, b) => b.stats.last_seen - a.stats.last_seen))
   }
 
   useEffect(() => {
