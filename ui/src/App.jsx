@@ -6,16 +6,26 @@ import Client from './Client'
 function App() {
   const [clients, setClients] = useState([])
 
+  const fetchData = async () => {
+    const res = await api.getClients()
+    setClients(res.clients.sort((a, b) => a.stats.last_seen - b.stats.last_seen))
+  }
+
   useEffect(() => {
-    api.getClients().then((res) => setClients(res.clients))
+    fetchData()
+    
+    const interval = setInterval(() => {
+      fetchData()
+    }, 500)
+    return () => clearInterval(interval)
   }, [])
 
   return (
-    <>
+    <div className='board'>
       {clients.map((client) => (
         <Client client={client} key={client.id}></Client>
       ))}
-    </>
+    </div>
   )
 }
 

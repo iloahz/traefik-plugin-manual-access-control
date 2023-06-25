@@ -58,7 +58,7 @@ func createServer() {
 	type GenerateTokenRequest struct {
 		IP        string `json:"ip"`
 		UserAgent string `json:"user_agent"`
-		Resource  string `json:"resource"`
+		URL       string `json:"url"`
 	}
 
 	r.POST("/api/token/generate", func(c *gin.Context) {
@@ -68,14 +68,14 @@ func createServer() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		client := NewClient(req.IP, req.UserAgent, req.Resource)
+		client := NewClient(req.IP, req.UserAgent, req.URL)
 		waitForConsent(c, client)
 	})
 
 	type ValidateTokenRequest struct {
 		IP        string `json:"ip"`
 		UserAgent string `json:"user_agent"`
-		Resource  string `json:"resource"`
+		URL       string `json:"url"`
 		Token     string `json:"token"`
 	}
 
@@ -105,13 +105,13 @@ func createServer() {
 				return
 			} else if client == nil {
 				// incase token is valid but client is not found, trust it and issue a new token
-				client := NewClient(req.IP, req.UserAgent, req.Resource)
+				client := NewClient(req.IP, req.UserAgent, req.URL)
 				client.Allow()
 				waitForConsent(c, client)
 				return
 			}
 		}
-		client := NewClient(req.IP, req.UserAgent, req.Resource)
+		client := NewClient(req.IP, req.UserAgent, req.URL)
 		waitForConsent(c, client)
 	})
 
@@ -170,9 +170,9 @@ func main() {
 	go func() {
 		time.Sleep(time.Second)
 		NewClient("116.179.32.218", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36", "cdn.home.iloahz.com")
-		c2 := NewClient("116.179.32.82", "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_2 like Mac OS X) AppleWebKit/603.2.4 (KHTML, like Gecko) Version/10.0 Mobile/14F89 Safari/602.1", "code.home.iloahz.com")
+		c2 := NewClient("221.192.199.49", "Mozilla/5.0 (iPhone; CPU iPhone OS 10_3_2 like Mac OS X) AppleWebKit/603.2.4 (KHTML, like Gecko) Version/10.0 Mobile/14F89 Safari/602.1", "code.home.iloahz.com")
 		c2.Allow()
-		c3 := NewClient("116.179.32.204", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36", "chatgpt.home.iloahz.com")
+		c3 := NewClient("180.163.220.66", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36", "chatgpt.home.iloahz.com")
 		c3.Block()
 	}()
 	createServer()

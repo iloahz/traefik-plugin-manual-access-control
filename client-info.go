@@ -11,6 +11,7 @@ type ClientInfo struct {
 	City    string  `json:"city"`
 	Lat     float64 `json:"lat"`
 	Long    float64 `json:"long"`
+	AS      string  `json:"as"`
 	ASN     string  `json:"asn"`
 
 	UserAgent      string `json:"user_agent"`
@@ -32,7 +33,8 @@ func ParseClientInfo(ip string, userAgent string) *ClientInfo {
 		c.City = ipInfo.CityName
 		c.Lat = ipInfo.Latitude
 		c.Long = ipInfo.Longitude
-		c.ASN = ipInfo.AS
+		c.AS = ipInfo.AS
+		c.ASN = ipInfo.ASN
 	}
 
 	ua := useragent.Parse(userAgent)
