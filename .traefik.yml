@@ -7,4 +7,4 @@ import: github.com/iloahz/traefik-plugin-manual-access-control/plugin
 summary: Provide manual access control with JWT in cookie
 
 testData:
-  Key: 8HvPVByYKFAt16+qG5/ZDgV11iVEDPOxVrM+caF81jA=
+  Server: https://tpmac.your-domain.com
