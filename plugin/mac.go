@@ -60,6 +60,11 @@ func (m *MAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if tokens := strings.Split(req.RemoteAddr, ":"); len(tokens) == 2 {
 		r.IP = tokens[0]
 	}
+	if ips := req.Header.Values("X-Forwarded-For"); len(ips) > 0 {
+		if tokens := strings.Split(ips[0], ","); len(tokens) > 0 {
+			r.IP = tokens[len(tokens)-1]
+		}
+	}
 	if err != nil {
 		// generate token
 		buf, err := json.Marshal(r)
