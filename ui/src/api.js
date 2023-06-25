@@ -1,5 +1,4 @@
-const baseURL = 'http://localhost:9502/api'
-// const baseURL = '/api'
+const baseURL = import.meta.env.PROD ? '/api' : 'http://localhost:9502/api'
 
 export default {
     getClients: async () => {
