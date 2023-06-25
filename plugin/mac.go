@@ -55,7 +55,7 @@ func (m *MAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	cookie, err := req.Cookie(cookieKey)
 	r := &Request{
 		UserAgent: req.UserAgent(),
-		URL:       req.URL.String(),
+		URL:       req.URL.Host,
 	}
 	if tokens := strings.Split(req.RemoteAddr, ":"); len(tokens) == 2 {
 		r.IP = tokens[0]
