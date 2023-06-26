@@ -14,33 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func waitForConsent(c *gin.Context, client *Client) {
-	// check once before waiting
-	switch client.Status {
-	case ClientStatusAllowed:
-		c.JSON(http.StatusOK, gin.H{"token": j.GenerateToken(client.ID)})
-		return
-	case ClientStatusBlocked:
-		c.JSON(http.StatusForbidden, gin.H{"error": "client blocked"})
-		return
-	}
-	for {
-		select {
-		case <-c.Done():
-			return
-		case <-client.Update():
-			switch client.Status {
-			case ClientStatusAllowed:
-				c.JSON(http.StatusOK, gin.H{"token": j.GenerateToken(client.ID)})
-				return
-			case ClientStatusBlocked:
-				c.JSON(http.StatusForbidden, gin.H{"error": "client blocked"})
-				return
-			}
-		}
-	}
-}
-
 func createServer() {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
@@ -60,6 +33,11 @@ func createServer() {
 		URL       string `json:"url"`
 	}
 
+	type GenerateTokenResponse struct {
+		ID    string `json:"id"`
+		Token string `json:"token"`
+	}
+
 	r.POST("/api/token/generate", func(c *gin.Context) {
 		var req GenerateTokenRequest
 		err := c.Bind(&req)
@@ -68,7 +46,10 @@ func createServer() {
 			return
 		}
 		client := NewClient(req.IP, req.UserAgent, req.URL)
-		waitForConsent(c, client)
+		c.JSON(http.StatusOK, GenerateTokenResponse{
+			ID:    client.ID,
+			Token: j.GenerateToken(client.ID),
+		})
 	})
 
 	type ValidateTokenRequest struct {
@@ -78,40 +59,77 @@ func createServer() {
 		Token     string `json:"token"`
 	}
 
+	type ValidateTokenResponse struct {
+		ID    string `json:"id"`
+		Token string `json:"token"`
+	}
+
 	r.POST("/api/token/validate", func(c *gin.Context) {
+		fmt.Println("validate token")
 		var req ValidateTokenRequest
 		err := c.Bind(&req)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			fmt.Println("error parsing request", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
+		fmt.Println("req", req)
 		claims, err := j.ValidateToken(req.Token)
 		if err != nil {
-			c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
+			fmt.Println("invalid token, error:", err)
+			client := NewClient(req.IP, req.UserAgent, req.URL)
+			c.JSON(http.StatusForbidden, ValidateTokenResponse{
+				ID:    client.ID,
+				Token: j.GenerateToken(client.ID),
+			})
 			return
 		}
 		exp, err := claims.GetExpirationTime()
 		if err != nil {
-			c.JSON(http.StatusForbidden, gin.H{"error": "invalid token"})
+			fmt.Println("error getting expiration time, error:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "error getting expiration time"})
 			return
 		}
-		if exp.After(time.Now()) {
+		if exp.Before(time.Now()) {
+			fmt.Println("token expired")
 			client := GetClientByID(claims.ID)
-			if client != nil && client.Info != nil && client.Info.UserAgent == req.UserAgent && client.Status == ClientStatusAllowed {
-				// normal case for valid token
-				// TODO refresh token if exp is close
-				c.JSON(http.StatusOK, gin.H{"status": "ok"})
-				return
-			} else if client == nil {
-				// incase token is valid but client is not found, trust it and issue a new token
-				client := NewClient(req.IP, req.UserAgent, req.URL)
-				client.Allow()
-				waitForConsent(c, client)
-				return
+			if client == nil {
+				client = NewClient(req.IP, req.UserAgent, req.URL)
 			}
+			c.JSON(http.StatusForbidden, ValidateTokenResponse{
+				ID:    client.ID,
+				Token: j.GenerateToken(client.ID),
+			})
+			return
 		}
-		client := NewClient(req.IP, req.UserAgent, req.URL)
-		waitForConsent(c, client)
+		client := GetClientByID(claims.ID)
+		if client == nil {
+			fmt.Println("token is valid but client is not found")
+			// token is valid but client is not found, trust it and issue a new token
+			// TODO disallow this case after supporting persistent storage
+			client = NewClient(req.IP, req.UserAgent, req.URL)
+			client.Allow()
+			c.JSON(http.StatusOK, ValidateTokenResponse{
+				ID:    client.ID,
+				Token: j.GenerateToken(client.ID),
+			})
+			return
+		}
+		if client.Info != nil && client.Info.UserAgent == req.UserAgent && client.Status == ClientStatusAllowed {
+			fmt.Println("token is valid and client info matches and client is allowed")
+			// normal case for valid token
+			// TODO refresh token if exp is close
+			c.JSON(http.StatusOK, ValidateTokenResponse{
+				ID:    client.ID,
+				Token: req.Token,
+			})
+			return
+		}
+		client = NewClient(req.IP, req.UserAgent, req.URL)
+		c.JSON(http.StatusForbidden, ValidateTokenResponse{
+			ID:    client.ID,
+			Token: j.GenerateToken(client.ID),
+		})
 	})
 
 	r.GET("/api/clients", func(c *gin.Context) {

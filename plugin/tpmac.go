@@ -18,7 +18,7 @@ func CreateConfig() *Config {
 	return &Config{}
 }
 
-type MAC struct {
+type TPMAC struct {
 	ctx    context.Context
 	next   http.Handler
 	config *Config
@@ -26,7 +26,7 @@ type MAC struct {
 }
 
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-	m := &MAC{
+	m := &TPMAC{
 		ctx:    ctx,
 		next:   next,
 		config: config,
@@ -39,11 +39,6 @@ const (
 	cookieKey = "tpmac"
 )
 
-var (
-	ErrInvalidToken = fmt.Errorf("invalid token")
-	ErrNotAllowed   = fmt.Errorf("not allowed")
-)
-
 type Request struct {
 	IP        string  `json:"ip"`
 	UserAgent string  `json:"user_agent"`
@@ -51,11 +46,15 @@ type Request struct {
 	Token     *string `json:"token,omitempty"`
 }
 
-func (m *MAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	cookie, err := req.Cookie(cookieKey)
+type Response struct {
+	ID    string `json:"id"`
+	Token string `json:"token"`
+}
+
+func (m *TPMAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	r := &Request{
 		UserAgent: req.UserAgent(),
-		URL:       req.URL.Host,
+		URL:       req.Host,
 	}
 	if tokens := strings.Split(req.RemoteAddr, ":"); len(tokens) == 2 {
 		r.IP = tokens[0]
@@ -68,7 +67,8 @@ func (m *MAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if ip := req.Header.Values("X-Real-IP"); len(ip) > 0 && len(ip[0]) > 0 {
 		r.IP = ip[0]
 	}
-	if err != nil {
+	cookie, err := req.Cookie(cookieKey)
+	if err != nil || len(cookie.Value) == 0 {
 		// generate token
 		buf, err := json.Marshal(r)
 		if err != nil {
@@ -83,26 +83,27 @@ func (m *MAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if res.StatusCode == http.StatusOK {
 			// token generated
 			defer res.Body.Close()
-			type Response struct {
-				Token string `json:"token"`
-			}
 			buf, err := io.ReadAll(res.Body)
 			if err != nil {
 				http.Error(rw, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			var token Response
-			err = json.Unmarshal(buf, &token)
+			var t Response
+			err = json.Unmarshal(buf, &t)
 			if err != nil {
 				http.Error(rw, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			rw.Header().Add("Set-Cookie", fmt.Sprintf("%s=%s; Path=/", cookieKey, token.Token))
-			m.next.ServeHTTP(rw, req)
+			http.SetCookie(rw, &http.Cookie{
+				Name:  cookieKey,
+				Value: t.Token,
+				Path:  "/",
+			})
+			io.WriteString(rw, fmt.Sprintf("id: %s\nshare this id to admin to get access", t.ID))
 			return
 		} else {
 			// token not generated
-			http.Error(rw, ErrNotAllowed.Error(), http.StatusForbidden)
+			http.Error(rw, "failed to generate token", http.StatusInternalServerError)
 			return
 		}
 	} else {
@@ -121,27 +122,29 @@ func (m *MAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if res.StatusCode == http.StatusOK {
 			// token valid, might refreshed
 			defer res.Body.Close()
-			type Response struct {
-				Token string `json:"token"`
-			}
 			buf, err := io.ReadAll(res.Body)
 			if err != nil {
 				http.Error(rw, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			var token Response
-			err = json.Unmarshal(buf, &token)
+			var t Response
+			err = json.Unmarshal(buf, &t)
 			if err != nil {
-				// no new token is returned, just proceed
-				m.next.ServeHTTP(rw, req)
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			rw.Header().Add("Set-Cookie", fmt.Sprintf("%s=%s; Path=/", cookieKey, token.Token))
+			if t.Token != cookie.Value {
+				http.SetCookie(rw, &http.Cookie{
+					Name:  cookieKey,
+					Value: t.Token,
+					Path:  "/",
+				})
+			}
 			m.next.ServeHTTP(rw, req)
 			return
 		} else {
-			// token invalid
-			http.Error(rw, ErrInvalidToken.Error(), http.StatusForbidden)
+			// token invalid, not allowed, etc.
+			http.Error(rw, "not allowed", http.StatusForbidden)
 			return
 		}
 	}

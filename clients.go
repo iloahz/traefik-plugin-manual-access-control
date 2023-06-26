@@ -54,7 +54,7 @@ func NewClient(ip string, ua string, url string) *Client {
 		},
 		update: make(chan bool, 9),
 	}
-	log.Println("new client", c.ID)
+	log.Println("new client", c)
 	c.Info = ParseClientInfo(ip, ua)
 	mutex.Lock()
 	defer mutex.Unlock()
