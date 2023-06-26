@@ -27,7 +27,7 @@ type Client struct {
 	ID     string       `json:"id"`
 	Status ClientStatus `json:"status"`
 	Info   *ClientInfo  `json:"info"`
-	URL    string       `json:"url"`
+	Host   string       `json:"host"`
 	Stats  *ClientStats `json:"stats"`
 
 	update chan bool
@@ -42,11 +42,11 @@ func init() {
 	clients = make(map[string]*Client)
 }
 
-func NewClient(ip string, ua string, url string) *Client {
+func NewClient(ip string, ua string, host string) *Client {
 	c := &Client{
 		ID:     uuid.New().String(),
 		Status: ClientStatusPending,
-		URL:    url,
+		Host:   host,
 		Stats: &ClientStats{
 			FirstSeen: time.Now().UnixMilli(),
 			LastSeen:  time.Now().UnixMilli(),

@@ -30,7 +30,7 @@ func createServer() {
 	type GenerateTokenRequest struct {
 		IP        string `json:"ip"`
 		UserAgent string `json:"user_agent"`
-		URL       string `json:"url"`
+		Host      string `json:"host"`
 	}
 
 	type GenerateTokenResponse struct {
@@ -45,7 +45,7 @@ func createServer() {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		client := NewClient(req.IP, req.UserAgent, req.URL)
+		client := NewClient(req.IP, req.UserAgent, req.Host)
 		c.JSON(http.StatusOK, GenerateTokenResponse{
 			ID:    client.ID,
 			Token: j.GenerateToken(client.ID),
@@ -55,7 +55,7 @@ func createServer() {
 	type ValidateTokenRequest struct {
 		IP        string `json:"ip"`
 		UserAgent string `json:"user_agent"`
-		URL       string `json:"url"`
+		Host      string `json:"host"`
 		Token     string `json:"token"`
 	}
 
@@ -77,7 +77,7 @@ func createServer() {
 		claims, err := j.ValidateToken(req.Token)
 		if err != nil {
 			fmt.Println("invalid token, error:", err)
-			client := NewClient(req.IP, req.UserAgent, req.URL)
+			client := NewClient(req.IP, req.UserAgent, req.Host)
 			c.JSON(http.StatusForbidden, ValidateTokenResponse{
 				ID:    client.ID,
 				Token: j.GenerateToken(client.ID),
@@ -94,7 +94,7 @@ func createServer() {
 			fmt.Println("token expired")
 			client := GetClientByID(claims.ID)
 			if client == nil {
-				client = NewClient(req.IP, req.UserAgent, req.URL)
+				client = NewClient(req.IP, req.UserAgent, req.Host)
 			}
 			c.JSON(http.StatusForbidden, ValidateTokenResponse{
 				ID:    client.ID,
@@ -107,7 +107,7 @@ func createServer() {
 			fmt.Println("token is valid but client is not found")
 			// token is valid but client is not found, trust it and issue a new token
 			// TODO disallow this case after supporting persistent storage
-			client = NewClient(req.IP, req.UserAgent, req.URL)
+			client = NewClient(req.IP, req.UserAgent, req.Host)
 			client.Allow()
 			c.JSON(http.StatusOK, ValidateTokenResponse{
 				ID:    client.ID,
@@ -125,7 +125,7 @@ func createServer() {
 			})
 			return
 		}
-		client = NewClient(req.IP, req.UserAgent, req.URL)
+		client = NewClient(req.IP, req.UserAgent, req.Host)
 		c.JSON(http.StatusForbidden, ValidateTokenResponse{
 			ID:    client.ID,
 			Token: j.GenerateToken(client.ID),

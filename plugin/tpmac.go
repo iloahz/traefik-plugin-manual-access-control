@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -42,7 +43,7 @@ const (
 type Request struct {
 	IP        string  `json:"ip"`
 	UserAgent string  `json:"user_agent"`
-	URL       string  `json:"url"`
+	Host      string  `json:"host"`
 	Token     *string `json:"token,omitempty"`
 }
 
@@ -51,10 +52,14 @@ type Response struct {
 	Token string `json:"token"`
 }
 
+func log(msg string) {
+	os.Stdout.WriteString(msg + "\n")
+}
+
 func (m *TPMAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	r := &Request{
 		UserAgent: req.UserAgent(),
-		URL:       req.Host,
+		Host:      req.Host,
 	}
 	if tokens := strings.Split(req.RemoteAddr, ":"); len(tokens) == 2 {
 		r.IP = tokens[0]
@@ -71,6 +76,11 @@ func (m *TPMAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		r.IP = ip[0]
 	}
 	cookie, err := req.Cookie(cookieKey)
+	log(fmt.Sprintf("user-agent: %s", r.UserAgent))
+	log(fmt.Sprintf("ip: %s", r.IP))
+	log(fmt.Sprintf("full url: %s", req.URL.String()))
+	log(fmt.Sprintf("host: %s", r.Host))
+	log(fmt.Sprintf("cookie: %s", cookie))
 	if err != nil || len(cookie.Value) == 0 {
 		// generate token
 		buf, err := json.Marshal(r)
@@ -147,6 +157,27 @@ func (m *TPMAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			return
 		} else {
 			// token invalid, not allowed, etc.
+			defer res.Body.Close()
+			buf, err := io.ReadAll(res.Body)
+			if err != nil {
+				http.Error(rw, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			var t Response
+			err = json.Unmarshal(buf, &t)
+			if err != nil {
+				http.Error(rw, "not allowed", http.StatusForbidden)
+				return
+			}
+			if len(t.Token) > 0 {
+				http.SetCookie(rw, &http.Cookie{
+					Name:  cookieKey,
+					Value: t.Token,
+					Path:  "/",
+				})
+				io.WriteString(rw, fmt.Sprintf("id: %s\nshare this id to admin to get access", t.ID))
+				return
+			}
 			http.Error(rw, "not allowed", http.StatusForbidden)
 			return
 		}
