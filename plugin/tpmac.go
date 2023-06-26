@@ -67,6 +67,9 @@ func (m *TPMAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	if ip := req.Header.Values("X-Real-IP"); len(ip) > 0 && len(ip[0]) > 0 {
 		r.IP = ip[0]
 	}
+	if ip := req.Header.Values("CF-Connecting-IP"); len(ip) > 0 && len(ip[0]) > 0 {
+		r.IP = ip[0]
+	}
 	cookie, err := req.Cookie(cookieKey)
 	if err != nil || len(cookie.Value) == 0 {
 		// generate token
