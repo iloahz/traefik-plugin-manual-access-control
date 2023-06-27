@@ -1,4 +1,4 @@
-package main
+package clients
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-type IPInfo struct {
+type RawIPInfo struct {
 	IP          string  `json:"ip"`
 	CountryCode string  `json:"country_code"`
 	CountryName string  `json:"country_name"`
@@ -23,7 +23,7 @@ type IPInfo struct {
 	IsProxy     bool    `json:"is_proxy"`
 }
 
-func GetIPInfo(ip string) (*IPInfo, error) {
+func GetIPInfo(ip string) (*RawIPInfo, error) {
 	apiKey := os.Getenv("IP2LOCATION_API_KEY")
 	if apiKey == "" {
 		return nil, fmt.Errorf("IP2LOCATION_API_KEY environment variable is not set")
@@ -41,7 +41,7 @@ func GetIPInfo(ip string) (*IPInfo, error) {
 		return nil, err
 	}
 
-	var ipInfo IPInfo
+	var ipInfo RawIPInfo
 	if err := json.Unmarshal(body, &ipInfo); err != nil {
 		return nil, err
 	}

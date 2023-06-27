@@ -6,13 +6,13 @@ export default {
         return await res.json()
     },
 
-    allowClient: async (id) => {
-        const res = await fetch(`${baseURL}/client/${id}/allow`)
+    allowClient: async (id, host) => {
+        const res = await fetch(`${baseURL}/client/${id}/allow?host=${host}`)
         return await res.json()
     },
 
-    blockClient: async (id) => {
-        const res = await fetch(`${baseURL}/client/${id}/block`)
+    blockClient: async (id, host) => {
+        const res = await fetch(`${baseURL}/client/${id}/block?host=${host}`)
         return await res.json()
     }
 }

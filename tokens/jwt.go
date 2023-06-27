@@ -1,4 +1,4 @@
-package main
+package tokens
 
 import (
 	"encoding/base64"
@@ -44,13 +44,15 @@ func NewJWT(secret string) (*JWT, error) {
 }
 
 // generate token based on seed using aes
-func (j *JWT) GenerateToken(id string) string {
+func (j *JWT) GenerateToken(id string, host string, ip string) string {
 	// TODO make exp configurable
 	claims := &JWTClaims{
-		Exp: time.Now().Add(time.Hour * 24 * 30 * 12 * 3).Unix(), // 3 years
-		Iat: time.Now().Unix(),
-		Nbf: time.Now().Unix(),
-		ID:  id,
+		Exp:  time.Now().Add(time.Hour * 24 * 30 * 12 * 3).Unix(), // 3 years
+		Iat:  time.Now().Unix(),
+		Nbf:  time.Now().Unix(),
+		ID:   id,
+		Host: host,
+		IP:   ip,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	signedToken, err := token.SignedString(j.secret)
@@ -58,6 +60,10 @@ func (j *JWT) GenerateToken(id string) string {
 		panic(err)
 	}
 	return signedToken
+}
+
+func GenerateToken(id string, host string, ip string) string {
+	return j.GenerateToken(id, host, ip)
 }
 
 func (j *JWT) ValidateToken(signedToken string) (*JWTClaims, error) {
@@ -75,4 +81,8 @@ func (j *JWT) ValidateToken(signedToken string) (*JWTClaims, error) {
 	} else {
 		return nil, errors.New("invalid token")
 	}
+}
+
+func ValidateToken(signedToken string) (*JWTClaims, error) {
+	return j.ValidateToken(signedToken)
 }

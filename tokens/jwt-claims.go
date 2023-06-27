@@ -1,4 +1,4 @@
-package main
+package tokens
 
 import (
 	"time"
@@ -7,10 +7,12 @@ import (
 )
 
 type JWTClaims struct {
-	Exp int64  `json:"exp"`
-	Iat int64  `json:"iat"`
-	Nbf int64  `json:"nbf"`
-	ID  string `json:"id"`
+	Exp  int64  `json:"exp"` // seconds
+	Iat  int64  `json:"iat"` // seconds
+	Nbf  int64  `json:"nbf"` // seconds
+	ID   string `json:"id"`
+	Host string `json:"host"`
+	IP   string `json:"ip"`
 }
 
 // GetExpirationTime implements the Claims interface.

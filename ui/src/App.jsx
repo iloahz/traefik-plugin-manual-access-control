@@ -8,7 +8,18 @@ function App() {
 
   const fetchData = async () => {
     const res = await api.getClients()
-    setClients(res.clients.sort((a, b) => b.stats.last_seen - a.stats.last_seen))
+    setClients(res.clients.sort((a, b) => {
+      return b.access_logs.length - a.access_logs.length
+      // let aLastSeen = 0;
+      // a.access_logs.forEach((k, v) => {
+      //   aLastSeen = Math.max(aLastSeen, v.last_seen)
+      // })
+      // let bLastSeen = 0;
+      // b.access_logs.forEach((k, v) => {
+      //   bLastSeen = Math.max(bLastSeen, v.last_seen)
+      // })
+      // return bLastSeen - aLastSeen
+    }))
   }
 
   useEffect(() => {

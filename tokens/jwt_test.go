@@ -1,4 +1,4 @@
-package main
+package tokens
 
 import (
 	"os"
@@ -7,14 +7,14 @@ import (
 
 func TestGenerateToken(t *testing.T) {
 	os.Setenv("JWT_SECRET", "8HvPVByYKFAt16+qG5/ZDgV11iVEDPOxVrM+caF81jA=")
-	token := j.GenerateToken("some_id")
+	token := GenerateToken("some_id", "some_ip", "some_host")
 	t.Log(token)
 }
 
 func TestValidateToken(t *testing.T) {
 	os.Setenv("JWT_SECRET", "8HvPVByYKFAt16+qG5/ZDgV11iVEDPOxVrM+caF81jA=")
-	token := j.GenerateToken("some_id")
-	claims, err := j.ValidateToken(token)
+	token := GenerateToken("some_id", "some_ip", "some_host")
+	claims, err := ValidateToken(token)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func TestInvalidToken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	token := j1.GenerateToken("some_id")
+	token := j1.GenerateToken("some_id", "some_ip", "some_host")
 	_, err = j2.ValidateToken(token)
 	if err == nil {
 		t.Fatal("token is valid")
