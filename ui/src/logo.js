@@ -43,16 +43,15 @@ function similarity(s1, s2) {
 
 export default {
     browser: (client) => {
-        const brand = client.info.browser_name.toLowerCase()
+        const brand = client.ua_info.browser_name.toLowerCase()
         return `https://raw.githubusercontent.com/alrra/browser-logos/main/src/${brand}/${brand}_128x128.png`
     },
 
     os: (client) => {
-        const brand = client.info.os_name.toLowerCase()
+        const brand = client.ua_info.os_name.toLowerCase()
         const match = osList.reduce((prev, curr) => {
             const sim = similarity(brand, curr.slug.toLowerCase())
             const dis = editDistance(brand, curr.slug.toLowerCase())
-            console.log(brand, curr, sim, dis)
             if (sim > prev.sim || (sim === prev.sim && dis < prev.dis)) {
               return {sim, dis, curr}
             } else if (sim == prev.sim && dis == prev.dis) {

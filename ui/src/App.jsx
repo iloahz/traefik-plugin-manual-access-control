@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './App.css'
 import api from './api'
-import Client from './Client'
+import AccessLog from './AccessLog'
 
 function App() {
   const [clients, setClients] = useState([])
@@ -9,22 +9,30 @@ function App() {
   const fetchData = async () => {
     const res = await api.getClients()
     setClients(res.clients.sort((a, b) => {
-      return b.access_logs.length - a.access_logs.length
-      // let aLastSeen = 0;
-      // a.access_logs.forEach((k, v) => {
-      //   aLastSeen = Math.max(aLastSeen, v.last_seen)
-      // })
-      // let bLastSeen = 0;
-      // b.access_logs.forEach((k, v) => {
-      //   bLastSeen = Math.max(bLastSeen, v.last_seen)
-      // })
-      // return bLastSeen - aLastSeen
+      let aLastSeen = 0;
+      a.access_logs.forEach((log) => {
+        aLastSeen = Math.max(aLastSeen,log.last_seen)
+      })
+      let bLastSeen = 0;
+      b.access_logs.forEach((log) => {
+        bLastSeen = Math.max(bLastSeen,log.last_seen)
+      })
+      if (aLastSeen != bLastSeen) {
+        return bLastSeen - aLastSeen
+      }
+      if (a.id < b.id) {
+        return 1
+      } else if (a.id > b.id) {
+        return -1
+      } else {
+        return 0
+      }
     }))
   }
 
   useEffect(() => {
     fetchData()
-    
+
     const interval = setInterval(() => {
       fetchData()
     }, 500)
@@ -33,9 +41,12 @@ function App() {
 
   return (
     <div className='board'>
-      {clients.map((client) => (
-        <Client client={client} key={client.id}></Client>
-      ))}
+      {clients.flatMap((client) => {
+        return client.access_logs.map((accessLog) => {
+          const id = `${client.id}-${accessLog.host}-${accessLog.ip_info.ip}`
+          return <AccessLog client={client} accessLog={accessLog} key={id}></AccessLog>
+        })
+      })}
     </div>
   )
 }
