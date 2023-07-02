@@ -6,3 +6,6 @@
 - [x] visualization of clients and consents
 - [ ] persistent data
 - [ ] rule based auto access control
+
+## Access Control Model
+

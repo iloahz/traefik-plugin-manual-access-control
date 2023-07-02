@@ -49,11 +49,16 @@ type Request struct {
 
 type Response struct {
 	ID    string `json:"id"`
+	Name  string `json:"name"`
 	Token string `json:"token"`
 }
 
 func log(msg string) {
 	os.Stdout.WriteString(msg + "\n")
+}
+
+func renderHintMessage(rw http.ResponseWriter, name string) {
+	io.WriteString(rw, fmt.Sprintf("tell the admin that you are <b>%s</b>", name))
 }
 
 func (m *TPMAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -112,7 +117,7 @@ func (m *TPMAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				Value: t.Token,
 				Path:  "/",
 			})
-			io.WriteString(rw, fmt.Sprintf("id: %s\nshare this id to admin to get access", t.ID))
+			renderHintMessage(rw, t.Name)
 			return
 		} else {
 			// token not generated
@@ -175,7 +180,7 @@ func (m *TPMAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 					Value: t.Token,
 					Path:  "/",
 				})
-				io.WriteString(rw, fmt.Sprintf("id: %s\nshare this id to admin to get access", t.ID))
+				renderHintMessage(rw, t.Name)
 				return
 			}
 			http.Error(rw, "not allowed", http.StatusForbidden)

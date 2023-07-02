@@ -3,6 +3,7 @@ package clients
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/iloahz/traefik-plugin-manual-access-control/tokens"
 )
 
@@ -20,6 +21,7 @@ const (
 )
 
 type Consent struct {
+	ID        string        `json:"id"`
 	ClientID  string        `json:"client_id"`
 	IP        string        `json:"ip"`
 	Host      string        `json:"host"`
@@ -31,6 +33,7 @@ type Consent struct {
 
 func NewConsent(clientID string, host string, ip string) *Consent {
 	return &Consent{
+		ID:        uuid.NewString(),
 		ClientID:  clientID,
 		Host:      host,
 		IP:        ip,

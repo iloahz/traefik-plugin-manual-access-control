@@ -9,6 +9,12 @@ import {
     CardFooter,
     CardHeader,
     CardPreview,
+    Menu,
+    MenuItem,
+    MenuList,
+    MenuPopover,
+    MenuTrigger,
+    SplitButton,
   } from "@fluentui/react-components"
 import { CheckmarkRegular, DismissRegular, LocationRegular, RouterRegular, ClockRegular, NumberSymbolRegular } from "@fluentui/react-icons"
 import Map, { Marker } from 'react-map-gl'
@@ -19,21 +25,39 @@ import logo from './logo'
 import dayjs from 'dayjs'
 
 const useStyles = makeStyles({
-    card: {
-      ...shorthands.margin("auto"),
-      width: "720px",
-      maxWidth: "100%",
-    },
-    headerImage: {
-      width: "32px",
-      height: "32px",
+  card: {
+    ...shorthands.margin("auto"),
+    width: "720px",
+    maxWidth: "100%",
+  },
+  headerImage: {
+    width: "32px",
+    height: "32px",
+  }
+})
+
+const checkConsent = (client, accessLog) => {
+  for (let i = 0;i < client.consents.length;i++) {
+    const consent = client.consents[i]
+    if ((consent.host == '*' || consent.host == accessLog.host) && 
+      (consent.ip == '*' || consent.ip == accessLog.ip_info.ip)) {
+      if (consent.status == 'allowed') {
+        return 'allowed'
+      } else if (consent.status == 'blocked') {
+        return 'blocked'
+      }
+      // else, continue to next consent
     }
-  })
+  }
+  return 'pending'
+}
 
 function AccessLog({client, accessLog}) {
-  const styles = useStyles();
+  const styles = useStyles()
+  const status = checkConsent(client, accessLog)
 
   const header = () => {
+    const clientName = <b>{client.name}</b>
     return (
       <CardHeader
         image={
@@ -43,36 +67,41 @@ function AccessLog({client, accessLog}) {
         }
         header={
           <Body1>
-            <a target='_blank' href={`https://www.ip2location.com/demo/${accessLog.ip_info.ip}`}><b>{accessLog.ip_info.ip}</b></a> wants to access <a target='_blank' href={`https://${accessLog.host}`}><b>{accessLog.host}</b></a>
+            {clientName} wants to access <a target='_blank' href={`https://${accessLog.host}`}><b>{accessLog.host}</b></a>
           </Body1>
         }
-        description={<Caption1>Client ID: {client.id}</Caption1>}
+        description={<Caption1>IP: {accessLog.ip_info.ip}</Caption1>}
       />)
   }
 
   const footer = () => {
-    if (client.status === 'allowed') {
+    const actionAllow = () => {
+      api.allowClient(client.id, accessLog.host)
+    }
+    const actionBlock = () => {
+      api.blockClient(client.id, accessLog.host)
+    }
+    if (status === 'allowed') {
       return (
         <CardFooter>
-          <Button onClick={() => {api.allowClient(client.id)}} icon={<CheckmarkRegular/>} appearance='primary'>Allowed</Button>
-          <Button onClick={() => {api.blockClient(client.id)}} icon={<DismissRegular/>}>Block</Button>
+          <Button onClick={actionAllow} icon={<CheckmarkRegular/>} appearance='primary'>Allowed</Button>
+          <Button onClick={actionBlock} icon={<DismissRegular/>}>Block</Button>
         </CardFooter>
       )
-    } else if (client.status === 'blocked') {
+    } else if (status === 'blocked') {
       return (
         <CardFooter>
-          <Button onClick={() => {api.allowClient(client.id)}} icon={<CheckmarkRegular/>}>Allow</Button>
-          <Button onClick={() => {api.blockClient(client.id)}} icon={<DismissRegular/>} appearance='primary'>Blocked</Button>
-        </CardFooter>
-      )
-    } else if (client.status === 'pending') {
-      return (
-        <CardFooter>
-          <Button onClick={() => {api.allowClient(client.id)}} icon={<CheckmarkRegular/>}>Allow</Button>
-          <Button onClick={() => {api.blockClient(client.id)}} icon={<DismissRegular/>}>Block</Button>
+          <Button onClick={actionAllow} icon={<CheckmarkRegular/>}>Allow</Button>
+          <Button onClick={actionBlock} icon={<DismissRegular/>} appearance='primary'>Blocked</Button>
         </CardFooter>
       )
     }
+    return (
+      <CardFooter>
+        <Button onClick={actionAllow} icon={<CheckmarkRegular/>}>Allow</Button>
+        <Button onClick={actionBlock} icon={<DismissRegular/>}>Block</Button>
+      </CardFooter>
+    )
   }
 
   return (

@@ -10,6 +10,7 @@ import (
 
 type Client struct {
 	ID         string       `json:"id"`
+	Name       string       `json:"name"`
 	UAInfo     *UAInfo      `json:"ua_info"`
 	Consents   []*Consent   `json:"consents"`
 	AccessLogs []*AccessLog `json:"access_logs"`
@@ -48,7 +49,8 @@ func GetClient(ua string, ip string, host string) *Client {
 		}
 	}
 	client := &Client{
-		ID:         uuid.New().String(),
+		ID:         uuid.NewString(),
+		Name:       GenerateName(),
 		UAInfo:     ParseUAInfo(ua),
 		Consents:   make([]*Consent, 0),
 		AccessLogs: make([]*AccessLog, 0),
