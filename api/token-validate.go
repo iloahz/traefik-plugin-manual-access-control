@@ -38,7 +38,7 @@ func validateToken(req *ValidateTokenRequest) (int, any) {
 	claims, err := tokens.ValidateToken(req.Token)
 	if err != nil {
 		logs.Info("invalid token, error:", zap.Error(err))
-		client := clients.GetClient(req.IP, req.UserAgent, req.Host)
+		client := clients.GetClient(req.UserAgent, req.IP, req.Host)
 		return blockWithNewToken(client.GetConsent(req.Host, clients.AnyIP))
 	}
 	client := clients.GetClientByID(claims.ID)
@@ -46,7 +46,7 @@ func validateToken(req *ValidateTokenRequest) (int, any) {
 		// token is valid but client is not found, trust the claims
 		// TODO disallow this case after supporting persistent storage
 		fmt.Println("token is valid but client is not found")
-		client = clients.GetClient(req.IP, req.UserAgent, req.Host)
+		client = clients.GetClient(req.UserAgent, req.IP, req.Host)
 		consent := client.GetConsent(claims.Host, claims.IP)
 		consent.Allow()
 	}

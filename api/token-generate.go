@@ -26,7 +26,7 @@ func generateTokenHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	client := clients.GetClient(req.IP, req.UserAgent, req.Host)
+	client := clients.GetClient(req.UserAgent, req.IP, req.Host)
 	consent := client.GetConsent(req.Host, clients.AnyIP)
 	c.JSON(http.StatusOK, GenerateTokenResponse{
 		ID:    client.ID,
