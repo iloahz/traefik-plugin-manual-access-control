@@ -11,6 +11,7 @@ type JWTClaims struct {
 	Iat  int64  `json:"iat"` // seconds
 	Nbf  int64  `json:"nbf"` // seconds
 	ID   string `json:"id"`
+	Name string `json:"name"`
 	Host string `json:"host"`
 	IP   string `json:"ip"`
 }

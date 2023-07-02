@@ -21,12 +21,14 @@ type ValidateTokenRequest struct {
 
 type ValidateTokenResponse struct {
 	ID    string `json:"id"`
+	Name  string `json:"name"`
 	Token string `json:"token"`
 }
 
 func blockWithNewToken(consent *clients.Consent) (int, any) {
 	return http.StatusForbidden, ValidateTokenResponse{
 		ID:    consent.ClientID,
+		Name:  consent.ClientName,
 		Token: consent.GenerateToken(),
 	}
 }
@@ -70,6 +72,7 @@ func validateToken(req *ValidateTokenRequest) (int, any) {
 		logs.Info("token is valid and client info matches and consent is allowed")
 		return http.StatusOK, ValidateTokenResponse{
 			ID:    client.ID,
+			Name:  client.Name,
 			Token: req.Token,
 		}
 	} else if consentIP.Status == clients.ConsentStatusBlocked {
@@ -82,6 +85,7 @@ func validateToken(req *ValidateTokenRequest) (int, any) {
 		logs.Info("token is valid and client info matches and consent is allowed")
 		return http.StatusOK, ValidateTokenResponse{
 			ID:    client.ID,
+			Name:  client.Name,
 			Token: req.Token,
 		}
 	} else if consent.Status == clients.ConsentStatusBlocked {

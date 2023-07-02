@@ -21,24 +21,26 @@ const (
 )
 
 type Consent struct {
-	ID        string        `json:"id"`
-	ClientID  string        `json:"client_id"`
-	IP        string        `json:"ip"`
-	Host      string        `json:"host"`
-	Status    ConsentStatus `json:"status"`
-	UpdatedAt int64         `json:"updated_at"`
+	ID         string        `json:"id"`
+	ClientID   string        `json:"client_id"`
+	ClientName string        `json:"client_name"`
+	IP         string        `json:"ip"`
+	Host       string        `json:"host"`
+	Status     ConsentStatus `json:"status"`
+	UpdatedAt  int64         `json:"updated_at"`
 
 	token string
 }
 
-func NewConsent(clientID string, host string, ip string) *Consent {
+func NewConsent(clientID string, clientName string, host string, ip string) *Consent {
 	return &Consent{
-		ID:        uuid.NewString(),
-		ClientID:  clientID,
-		Host:      host,
-		IP:        ip,
-		Status:    ConsentStatusDefault,
-		UpdatedAt: time.Now().UnixMilli(),
+		ID:         uuid.NewString(),
+		ClientID:   clientID,
+		ClientName: clientName,
+		Host:       host,
+		IP:         ip,
+		Status:     ConsentStatusDefault,
+		UpdatedAt:  time.Now().UnixMilli(),
 	}
 }
 
@@ -53,7 +55,7 @@ func (c *Consent) Block() {
 }
 
 func (c *Consent) newToken() string {
-	c.token = tokens.GenerateToken(c.ClientID, c.Host, c.IP)
+	c.token = tokens.GenerateToken(c.ClientID, c.ClientName, c.Host, c.IP)
 	return c.token
 }
 

@@ -44,13 +44,14 @@ func NewJWT(secret string) (*JWT, error) {
 }
 
 // generate token based on seed using aes
-func (j *JWT) GenerateToken(id string, host string, ip string) string {
+func (j *JWT) GenerateToken(id string, name string, host string, ip string) string {
 	// TODO make exp configurable
 	claims := &JWTClaims{
 		Exp:  time.Now().Add(time.Hour * 24 * 30 * 12 * 3).Unix(), // 3 years
 		Iat:  time.Now().Unix(),
 		Nbf:  time.Now().Unix(),
 		ID:   id,
+		Name: name,
 		Host: host,
 		IP:   ip,
 	}
@@ -62,8 +63,8 @@ func (j *JWT) GenerateToken(id string, host string, ip string) string {
 	return signedToken
 }
 
-func GenerateToken(id string, host string, ip string) string {
-	return j.GenerateToken(id, host, ip)
+func GenerateToken(id string, name string, host string, ip string) string {
+	return j.GenerateToken(id, name, host, ip)
 }
 
 func (j *JWT) ValidateToken(signedToken string) (*JWTClaims, error) {

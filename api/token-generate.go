@@ -15,6 +15,7 @@ type GenerateTokenRequest struct {
 
 type GenerateTokenResponse struct {
 	ID    string `json:"id"`
+	Name  string `json:"name"`
 	Token string `json:"token"`
 }
 
@@ -29,6 +30,7 @@ func generateTokenHandler(c *gin.Context) {
 	consent := client.GetConsent(req.Host, clients.AnyIP)
 	c.JSON(http.StatusOK, GenerateTokenResponse{
 		ID:    client.ID,
+		Name:  client.Name,
 		Token: consent.GenerateToken(),
 	})
 }

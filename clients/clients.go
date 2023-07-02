@@ -93,7 +93,7 @@ func (c *Client) GetConsent(host string, ip string) *Consent {
 			return consent
 		}
 	}
-	consent := NewConsent(c.ID, host, ip)
+	consent := NewConsent(c.ID, c.Name, host, ip)
 	c.Consents = append(c.Consents, consent)
 	return consent
 }
