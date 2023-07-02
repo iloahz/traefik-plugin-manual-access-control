@@ -58,6 +58,7 @@ func log(msg string) {
 }
 
 func renderHintMessage(rw http.ResponseWriter, name string) {
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 	io.WriteString(rw, fmt.Sprintf("tell the admin that you are <b>%s</b>", name))
 }
 
