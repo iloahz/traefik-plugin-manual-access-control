@@ -5,7 +5,7 @@ traefik-plugin-manual-access-control(TPMAC) is a traefik plugin that provides ma
 # Features
 
 - [x] manual access control
-- [x] visualization of clients and consents
+- [x] visualization of access logs
 - [ ] persistent data
 - [ ] rule based auto access control
 
@@ -89,6 +89,53 @@ When step #2 is successful, you should see TPMAC plugin enabled in traefik http 
 ![](assets/traefik_middleware.png)
 
 # How it works
+TPMAC uses JWT in cookie to control access, jwt is used to identify client only, consent is managed in TPMAC service.
+
+```mermaid
+sequenceDiagram
+  participant A as Service
+  participant B as TPMAC service
+  participant C as TPMAC plugin
+  participant D as Traefik
+  participant E as Client
+  rect rgba(255,165,0,0.2)
+  Note right of C: 1st request
+  E->>D: request
+  D->>C: request
+  C->>B: generate token
+  B->>C: jwt
+  C->>D: 403, jwt in cookie
+  D->>E: 403, jwt in cookie
+  end
+  B->>B: admin allows access
+  rect rgba(50,205,50,0.2)
+  Note right of C: 2nd request
+  E->>D: request, jwt in cookie
+  D->>C: request, jwt in cookie
+  C->>B: validate token
+  B->>C: valid
+  C->>A: request
+  A->>C: response
+  C->>D: response
+  D->>E: response
+  end
+```
+
+Access control is "who can access what", compared to the comprehensive model of [AWS IAM](https://aws.amazon.com/iam/), TPMAC uses a simplified model to make it more convenient for homelab users.
+
+## "Who" in TPMAC
+
+In common sense, "who" is one particular friend, but how do we identify this user could be tricky, especially when we want to avoid complicated configs for homelab admin and authentication for friends.
+
+A proxy of "who" is the device that the user is using, but unfortunately, it's not easy to identify a device, at least not in http layer, and since we want to build a general solution that works for all services, modifying the service is not an option.
+
+Identifying "who" is the most important part of access control, TPMAC uses JWT to identify "who", and the JWT is stored in cookie.
+
+## "What" in TPMAC
+
+"What" is very simple in TPMAC, it's a service behind traefik, and identified by the `host` only.
+
+## "Consent" in TPMAC
 
 TBA
 
