@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -114,9 +115,10 @@ func (m *TPMAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 				return
 			}
 			http.SetCookie(rw, &http.Cookie{
-				Name:  cookieKey,
-				Value: t.Token,
-				Path:  "/",
+				Name:    cookieKey,
+				Value:   t.Token,
+				Path:    "/",
+				Expires: time.Now().Add(24 * time.Hour * 365),
 			})
 			renderHintMessage(rw, t.Name)
 			return
