@@ -156,9 +156,10 @@ func (m *TPMAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			}
 			if t.Token != cookie.Value {
 				http.SetCookie(rw, &http.Cookie{
-					Name:  cookieKey,
-					Value: t.Token,
-					Path:  "/",
+					Name:    cookieKey,
+					Value:   t.Token,
+					Path:    "/",
+					Expires: time.Now().Add(24 * time.Hour * 365),
 				})
 			}
 			m.next.ServeHTTP(rw, req)
@@ -179,9 +180,10 @@ func (m *TPMAC) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			}
 			if len(t.Token) > 0 {
 				http.SetCookie(rw, &http.Cookie{
-					Name:  cookieKey,
-					Value: t.Token,
-					Path:  "/",
+					Name:    cookieKey,
+					Value:   t.Token,
+					Path:    "/",
+					Expires: time.Now().Add(24 * time.Hour * 365),
 				})
 				renderHintMessage(rw, t.Name)
 				return
